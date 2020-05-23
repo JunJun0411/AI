@@ -37,7 +37,7 @@ def reLU(x):
 # plt.plot(x,y)
 # plt.show()
 
-def Softmax(x):
+def softmax(x):
     exp_a = np.exp(x - np.max(x))
     sum_exp_a = np.sum(exp_a)
 #     print(exp_a)
