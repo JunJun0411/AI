@@ -67,8 +67,19 @@ def numerical_gradient_no_batch_(f, x):
     h = 1e-4 # 0.0001
     grad = np.zeros_like(x)
 
-    for i, x in enumerate(x): 
-        grad[i] = (f(x+h) - f(x-h)) / (2*h)
+    for i in range(x.size):
+        xi = x[i]
+        
+        # f(x+h) 계산
+        x[i] = xi + h
+        fxh1 = f(x)
+        
+        # f(x-h) 계산
+        x[i] = xi - h
+        fxh2 = f(x)
+        
+        grad[i] = (fxh1 - fxh2) / (2*h)
+        x[i] = xi
 
     return grad
 
@@ -84,7 +95,7 @@ def numerical_gradient(f, X):
 
 x = np.array([[-3.0, 4.0],
              [2.0, 1.0]])
-# print(numerical_gradient(f2, x), x)
+# print(numerical_gradient(f2, x), "\n", x)
 
 def gradient_descent(f, init_x, lr=0.1, epoch=100):
     x = init_x
