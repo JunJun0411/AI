@@ -17,8 +17,9 @@ class TwoLayerNeuralNetwork2:
         self.params['b2'] = np.random.randn(output_size)
         self.input_size, self.hidden_size, self.output_size = input_size, hidden_size, output_size # input, output size 저장
         self.x, self.t = [], []
-        
+    
     def init_data(self, x_train, t_train):
+        """ TrainingData를 class의 attribute로 지정"""
         self.x = x_train
         # 1차원 벡터라면 원 핫 인코딩을 해준다.
         if t_train.ndim == 1:
@@ -41,10 +42,14 @@ class TwoLayerNeuralNetwork2:
         return y
     
     def loss(self, x, t):
+        """ x를 통해 들어온 데이터를 계산하여 도출한 y값과 실제 target값의 loss를 계산 """
         y = self.predict(x)
         
+        # 만약 target으로 넘어온 값이 1차원 array인 label이라면
         if t.ndim==1:
             return cross_entropy_error_label(y, t)
+        
+        # target이 원 핫 인코딩되어 넘어왔다면
         return cross_entropy_error(y, t)
         
     def accuracy(self, x, t):
@@ -66,7 +71,7 @@ class TwoLayerNeuralNetwork2:
         # lambda를 이용하여 loss(x, t)의 함수 f를 구한다.
         f = lambda W: self.loss(x, t)
 
-        # 새 딕셔너리 params에 각 layer의 Weight값과 bias값의 기울기를 저장한다.
+        # 새 딕셔너리 params에 현재 상태에 대한 Weight값과 bias값의 기울기를 저장한다.
         params = {}
         params['W1'] = numerical_gradient(f, self.params['W1'])
         params['b1'] = numerical_gradient(f, self.params['b1'])
@@ -75,46 +80,51 @@ class TwoLayerNeuralNetwork2:
         
         return params
         
-    # batch = True이면 batch 사용, check = True라면 값의 추이, plt를 확인한다.
-    def learn(self, lr = 0.01, epoch = 100, batch_size = 1, batch = True, check = True):
+    # check == 1이라면 loss, acc를 print, check == 2라면 file에 저장, idx는 file이름에 추가될 
+    def learn(self, lr = 0.01, epoch = 100, batch_size = 1, check = 1, idx = 0):
         """ pre-requisite: x, t are stored in the local attribute"""
         # Plt 추이를 보기 위한 list 선언
         lossPlt, accPlt = [], []
-        
+        if check == 2:
+            file = open('./Result/loss&acc{}.txt'.format(idx), 'w')
         # epoch 만큼 반복 수행
         for i in range(epoch):
-            # Plt를 보고 싶다면 check=True
-            # lr,epoch,batchsize 변화 비교를 위해 불필요한 연산을 Skip하고 싶다면 check=False
-            if check:
-                # 훈련데이터의 현재 loss값과 accuracy를 구한다.
-                lo = self.loss(self.x, self.t)
-                ac = self.accuracy(self.x, self.t)
-                
-                # 각 list에 추가한다. (plot을 보기 위함)
-                lossPlt.append(lo)
-                accPlt.append(ac)
+            # 훈련데이터의 현재 loss값과 accuracy를 구한다.
+            lo = self.loss(self.x, self.t)
+            ac = self.accuracy(self.x, self.t)
+
+            # 각 list에 추가한다. (plot을 보기 위함)
+            lossPlt.append(lo)
+            accPlt.append(ac)
+            
+            # loss값과 정확도를 확인하고 싶다면 check=True
+            if check == 1:
                 print(i, "번째 loss, accuracy: " , lo, ac)
+            elif check == 2:
+                file.write("%d번째 loss, accuracy: " % i)
+                file.write("%f, " % lo)
+                file.write("%f\n" % ac)
             
-            # 훈련할 데이터 x값과 target을 x_train, t_train에 배정한다.
-            x_train = self.x
-            t_train = self.t
-            
-            # batch를 사용한다면
-            if batch: 
-                # 0 ~ 훈련Data 중에 batch_size만큼 random으로 뽑아낸다. 이때, 중복된 값도 허용된다.
-                batch_mask = np.random.choice(self.x.shape[0], batch_size)
-                x_train = self.x[batch_mask]
-                t_train = self.t[batch_mask]
-            
-            # 훈련 데이터를 통해 기울기를 구한다.
-            params = self.numerical_gradient(x_train, t_train)
-            # 기울어진 방향으로 가중치의 값을 조정하고 learningRate를 곱함으로 overshooting을 막는다.
-            for key in self.params:
-                self.params[key] -= lr * params[key]
+            # 0 ~ 훈련Data 중에 batch_size만큼 random으로 뽑아낸다.
+            batch_size = min(batch_size, self.x.shape[0])
+            # 학습 데이터 수 만큼 random suffle한다.
+            suffle = np.random.choice(self.x.shape[0], self.x.shape[0], replace=True)
+
+            # 전체 데이터 / batch_size 만큼 반복 한 것이 1 epoch이다. 
+            for i in range(int(self.x.shape[0] / batch_size)):
+                # x_train, t_train을 batch_size만큼 split한다.
+                x_train = self.x[i * batch_size : (i + 1) * batch_size]
+                t_train = self.t[i * batch_size : (i + 1) * batch_size]
+
+                # 미니 배치 훈련 데이터를 통해 기울기를 구한다.
+
+                params = self.numerical_gradient(x_train, t_train)
+                # 기울어진 방향으로 가중치(W1, b1, W2, b2)의 값을 갱신한다.
+                for key in self.params:
+                    self.params[key] -= lr * params[key]
         
-        # 만약 check=True라면 loss와 accuracy의 Plt List들을 return
-        if check:
-            return lossPlt, accPlt
+        # loss와 accuracy의 Plt List들을 return
+        return lossPlt, accPlt
         
     # Class의 변수들 초기화 -> lr, epoch, batchSize 변화 비교 실험 시 필요하다.
     def reset(self):
