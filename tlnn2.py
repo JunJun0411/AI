@@ -80,7 +80,7 @@ class TwoLayerNeuralNetwork2:
         
         return params
         
-    # check == 1이라면 loss, acc를 print, check == 2라면 file에 저장, idx는 file이름에 추가될 
+    # check == 1이라면 loss, acc를 print, check == 2라면 file에 저장
     def learn(self, lr = 0.01, epoch = 100, batch_size = 1, check = 1, idx = 0):
         """ pre-requisite: x, t are stored in the local attribute"""
         # Plt 추이를 보기 위한 list 선언
@@ -97,9 +97,10 @@ class TwoLayerNeuralNetwork2:
             lossPlt.append(lo)
             accPlt.append(ac)
             
-            # loss값과 정확도를 확인하고 싶다면 check=True
+            # loss값과 정확도를 확인하고 싶다면 check=1
             if check == 1:
                 print(i, "번째 loss, accuracy: " , lo, ac)
+            # loss값과 정확도를 file에 쓰고싶다면 check =2
             elif check == 2:
                 file.write("%d번째 loss, accuracy: " % i)
                 file.write("%f, " % lo)
@@ -107,14 +108,15 @@ class TwoLayerNeuralNetwork2:
             
             # 0 ~ 훈련Data 중에 batch_size만큼 random으로 뽑아낸다.
             batch_size = min(batch_size, self.x.shape[0])
-            # 학습 데이터 수 만큼 random suffle한다.
+            # 학습 데이터 수 만큼 random choice(suffle)한다.(중복 X)
             suffle = np.random.choice(self.x.shape[0], self.x.shape[0], replace=True)
 
             # 전체 데이터 / batch_size 만큼 반복 한 것이 1 epoch이다. 
             for i in range(int(self.x.shape[0] / batch_size)):
                 # x_train, t_train을 batch_size만큼 split한다.
-                x_train = self.x[i * batch_size : (i + 1) * batch_size]
-                t_train = self.t[i * batch_size : (i + 1) * batch_size]
+                batch_mask = suffle[i * batch_size : (i + 1) * batch_size]
+                x_train = self.x[batch_mask]
+                t_train = self.t[batch_mask]
 
                 # 미니 배치 훈련 데이터를 통해 기울기를 구한다.
 
