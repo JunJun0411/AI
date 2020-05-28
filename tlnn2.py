@@ -109,7 +109,7 @@ class TwoLayerNeuralNetwork2:
             # 0 ~ 훈련Data 중에 batch_size만큼 random으로 뽑아낸다.
             batch_size = min(batch_size, self.x.shape[0])
             # 학습 데이터 수 만큼 random choice(suffle)한다.(중복 X)
-            suffle = np.random.choice(self.x.shape[0], self.x.shape[0], replace=True)
+            suffle = np.random.choice(self.x.shape[0], self.x.shape[0], replace=False)
 
             # 전체 데이터 / batch_size 만큼 반복 한 것이 1 epoch이다. 
             for i in range(int(self.x.shape[0] / batch_size)):
