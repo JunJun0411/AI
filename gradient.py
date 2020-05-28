@@ -65,10 +65,11 @@ def f2(x):
 def numerical_gradient_no_batch_(f, x):
     """ x is a vector containing input value of f at x"""
     h = 1e-4 # 0.0001
-    grad = np.zeros_like(x)
-
+    grad = np.zeros_like(x) # X와 똑같은 형태의 행렬을 초기화
+    
+    # x의 크기만큼 반복
     for i in range(x.size):
-        xi = x[i]
+        xi = x[i] # x[i] 저장
         
         # f(x+h) 계산
         x[i] = xi + h
@@ -78,18 +79,18 @@ def numerical_gradient_no_batch_(f, x):
         x[i] = xi - h
         fxh2 = f(x)
         
-        grad[i] = (fxh1 - fxh2) / (2*h)
-        x[i] = xi
+        grad[i] = (fxh1 - fxh2) / (2*h) # 미분값(기울기)을 구한다.
+        x[i] = xi #다시 x[i]값을 원래대로 돌려놓는다.
 
     return grad
 
 def numerical_gradient(f, X):
-    if X.ndim == 1:
+    if X.ndim == 1: # 1차원의 경우
         return numerical_gradient_no_batch_(f, X) # original numerical_gradient function
-    else:
-        grad = np.zeros_like(X)
+    else: # 2차원의 경우
+        grad = np.zeros_like(X) # X와 똑같은 형태의 행렬을 초기화
         for idx, x in enumerate(X):
-            # print("in numerical gradient ", idx, x)
+            # idx에 해당하는 행마다 기울기를 구해준다.
             grad[idx] = numerical_gradient_no_batch_(f, x)
         return grad
 

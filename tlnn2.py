@@ -86,7 +86,7 @@ class TwoLayerNeuralNetwork2:
         # Plt 추이를 보기 위한 list 선언
         lossPlt, accPlt = [], []
         if check == 2:
-            file = open('./Result/loss&acc{}.txt'.format(idx), 'w')
+            file = open('./Result/[hi_{}]_[lr_{}]_[ep_{}]_[ba_{}].txt'.format(self.hidden_size, lr, epoch, batch_size), 'w')
         # epoch 만큼 반복 수행
         for i in range(epoch):
             # 훈련데이터의 현재 loss값과 accuracy를 구한다.
