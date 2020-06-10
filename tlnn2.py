@@ -81,7 +81,7 @@ class TwoLayerNeuralNetwork2:
         return params
         
     # check == 1이라면 loss, acc를 print, check == 2라면 file에 저장
-    def learn(self, lr = 0.01, epoch = 100, batch_size = 1, check = 1, idx = 0):
+    def learn(self, lr = 0.01, epoch = 100, batch_size = 1, check = 1):
         """ pre-requisite: x, t are stored in the local attribute"""
         # Plt 추이를 보기 위한 list 선언
         lossPlt, accPlt = [], []

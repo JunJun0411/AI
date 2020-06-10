@@ -38,53 +38,72 @@ class Relu:
         self.mask = None
 
     def forward(self, x):
-        pass
+        self.mask = (x<=0)
+        out = x.copy()
+        out[self.mask] = 0
 
         return out
 
     def backward(self, dout):
-        pass
-
+        dx = dout.copy()
+        dx[self.mask] = 0
+        
         return dx
 
 
 class CustomActivation:
+    """sigmoid"""
     def __init__(self):
-        pass
+        self.out = None
 
     def forward(self, x):
-        pass
+        eMIN = -np.log(np.finfo(type(0.1)).max)
+        xSafe = np.array(np.maximum(x, eMIN))
+        self.out = (1.0 / 1 + np.exp(-xSafe))
+        
+        return self.out
 
     def backward(self, dout):
-        pass
+        dx = dout * self.out * (1 - self.out)
+        
+        return dx
 
 
 class Affine:
     def __init__(self, W, b):
-        pass
+        self.W = W
+        self.b = b
+        self.x, self.dw, self.db = None, None, None
 
     def forward(self, x):
-        pass
+        self.x = x
+        out = np.dot(x, self.W) + self.b
 
         return out
 
     def backward(self, dout):
-        pass
+        dx = np.dot(dout, self.W.T)
+        dw = np.dot(self.x.T, dout)
+        db = np.sum(dout, axis=0)
 
         return dx
 
 
 class SoftmaxWithLoss:
     def __init__(self):
-        pass
+        self.t = None
+        self.y = None
 
     def forward(self, x, t):
-        pass
+        self.t = t
+        self.y = softmax(x)
+        self.loss = cross_entropy_error(self.y, self.t)
 
         return self.loss
 
     def backward(self, dout=1):
-        pass
+        batch_size = self.t.shape[0]
+        dx = (self.y - self.t) / batch_size
 
         return dx
 
@@ -94,7 +113,8 @@ class SGD:
         self.lr = lr
 
     def update(self, params, grads):
-        pass
+        for key in params.keys():
+            params[key] -= self.lr * grads[key]
 
 
 class CustomOptimizer:
@@ -110,7 +130,7 @@ class Model:
         """
         클래스 초기화
         """
-
+        
         self.params = {}
         self.__init_weight()
         self.__init_layer()
