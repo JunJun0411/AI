@@ -1,12 +1,11 @@
 # coding: utf-8
-# 2020/인공지능/final/학번/이름
+# 2020/인공지능/final/B511074/박준형
 import sys
 import os
 from collections import OrderedDict
 import pickle
 import numpy as np
 sys.path.append(os.pardir)  # 부모 디렉터리의 파일을 가져올 수 있도록 설정
-
 
 def softmax(x):
     if x.ndim == 2:
@@ -45,10 +44,9 @@ class Relu:
         return out
 
     def backward(self, dout):
-        dx = dout.copy()
-        dx[self.mask] = 0
+        dout[self.mask] = 0
         
-        return dx
+        return dout
 
 
 class CustomActivation:
@@ -83,11 +81,10 @@ class Affine:
 
     def backward(self, dout):
         dx = np.dot(dout, self.W.T)
-        dw = np.dot(self.x.T, dout)
-        db = np.sum(dout, axis=0)
+        self.dw = np.dot(self.x.T, dout)
+        self.db = np.sum(dout, axis=0)
 
         return dx
-
 
 class SoftmaxWithLoss:
     def __init__(self):
@@ -95,6 +92,8 @@ class SoftmaxWithLoss:
         self.y = None
 
     def forward(self, x, t):
+        if t.ndim == 1: #one hot 안되어 있는 경우
+            t = np.eye(6)[t]
         self.t = t
         self.y = softmax(x)
         self.loss = cross_entropy_error(self.y, self.t)
@@ -102,6 +101,7 @@ class SoftmaxWithLoss:
         return self.loss
 
     def backward(self, dout=1):
+        
         batch_size = self.t.shape[0]
         dx = (self.y - self.t) / batch_size
 
@@ -120,6 +120,22 @@ class SGD:
 class CustomOptimizer:
     pass
 
+class Dropout:
+    def __init__(self, dropout_ratio = 0.5):
+        self.dropout_ratio = dropout_ratio
+        self.mask = None
+    
+    def forward(self, x, train_flg = True):
+        if train_flg:
+            self.mask = np.random.rand(*x.shape) > dropout_ratio
+            
+            return x * self.mask
+        
+        else:
+            return x * (1.0 - self.dropout_ratio)
+        
+    def backward(self, dout):
+        return dout * self.mask
 
 class Model:
     """
@@ -130,9 +146,11 @@ class Model:
         """
         클래스 초기화
         """
-        
+
         self.params = {}
         self.__init_weight()
+        self.layers = OrderedDict()
+        self.last_layer = None
         self.__init_layer()
         self.optimizer = SGD(lr)
 
@@ -140,14 +158,35 @@ class Model:
         """
         레이어를 생성하시면 됩니다.
         """
-        pass
+        
+        # input -> 1 hidden layer
+        self.layers['Affine1'] = Affine(self.params['W1'], self.params['b1'])
+        self.layers['Relu1'] = Relu()
+        
+        # 1 hidden layer -> 2 hidden layer
+        self.layers['Affine2'] = Affine(self.params['W2'], self.params['b2'])
+         
+        self.last_layer = SoftmaxWithLoss()
+        
+        # 2 hidden layer -> 3 hidden layer
+        
 
-    def __init_weight(self,):
+    def __init_weight(self):
         """
         레이어에 탑재 될 파라미터들을 초기화 하시면 됩니다.
         """
-        pass
-
+        weight_init_std = 1
+        input_size = 6
+        hidden_size_1 = 10
+        hidden_size_2 = 10
+        output_size = 6
+        
+        self.params['W1'] = np.random.randn(input_size, hidden_size_1) * weight_init_std
+        self.params['b1'] = np.zeros(hidden_size_1)
+        
+        self.params['W2'] = np.random.randn(hidden_size_1, output_size) * weight_init_std
+        self.params['b2'] = np.zeros(output_size)
+    
     def update(self, x, t):
         """
         train 데이터와 레이블을 사용해서 그라디언트를 구한 뒤
@@ -191,12 +230,25 @@ class Model:
         :return: grads
         """
         # forward
-
+        self.loss(x, t)
+        
         # backward
-
+        dout = self.last_layer.backward(1)
+        
+        la = list(self.layers.values())
+        la.reverse()
+        
+        for layer in la:
+            dout = layer.backward(dout)
+        
         # 결과 저장
         grads = {}
-
+        
+        grads['W1'] = self.layers['Affine1'].dw
+        grads['b1'] = self.layers['Affine1'].db
+        grads['W2'] = self.layers['Affine2'].dw
+        grads['b2'] = self.layers['Affine2'].db
+        
         return grads
 
     def save_params(self, file_name="params.pkl"):
