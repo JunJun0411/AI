@@ -1,4 +1,0 @@
-=============== Final Test Accuracy ===============
-test acc: 0.168363,  inference_time: 0.000003
-=============== Final Test Accuracy ===============
-test acc: 0.252066,  inference_time: 0.000001
