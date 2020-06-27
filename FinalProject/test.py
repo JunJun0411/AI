@@ -38,13 +38,9 @@ class Tester:
         acc = 0.0
         start_time = time.time()
 
-        for i in range(int(x.shape[0] / self.batch_size)):
-            tx = x[i * self.batch_size:(i + 1) * self.batch_size]
-            tt = t[i * self.batch_size:(i + 1) * self.batch_size]
-
-            y = self.network.predict(tx)
-            y = np.argmax(y, axis=1)
-            acc += np.sum(y == tt)
+        y = self.network.predict(x)
+        y = np.argmax(y, axis=1)
+        acc += np.sum(y == t)
 
         inference_time = (time.time()-start_time)/x.shape[0]
 
