@@ -164,7 +164,7 @@ class Adagrad:
                 # dropOut를 위해 저장된 파라미터는 갱신하지 않으므로 Pass
                 if key is 'mean' or key is 'std':
                     continue
-                self.h[key] = grads[key] * grads[key]
+                self.h[key] += grads[key] * grads[key]
                 params[key] -= self.lr * grads[key] / np.sqrt(self.h[key] + 1e-7)
 
 class CustomOptimizer:
